@@ -1,13 +1,23 @@
 import { getDashboardStats, getSubCommunityCounts, getRecentActivity } from '@/services/dashboard'
-import { PageHeader } from '@/components/layout/PageHeader'
 import { StatCard } from '@/components/ui/StatCard'
 import { OwnerCard } from '@/components/ui/OwnerCard'
+import { TopBar } from '@/components/layout/TopBar'
+import { createClient } from '@/lib/supabase-server'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 
 export const revalidate = 60
 
 export default async function DashboardPage() {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data: profile } = await supabase
+    .from('agent_profiles')
+    .select('name, role')
+    .eq('id', user?.id)
+    .single()
+
   const [stats, subCounts, recent] = await Promise.all([
     getDashboardStats(),
     getSubCommunityCounts(),
@@ -16,8 +26,12 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <PageHeader title="TAG CRM" subtitle="Tilal Al Ghaf Intelligence" />
-      <div className="grid grid-cols-2 gap-3 px-4 mb-6">
+      <TopBar agentName={profile?.name ?? user?.email} agentRole={profile?.role} />
+      <div className="px-4 pt-4 pb-2">
+        <h1 className="text-xl font-semibold text-[#E8ECE8] tracking-tight">TAG CRM</h1>
+        <p className="text-sm text-[#555D55]">Tilal Al Ghaf Intelligence</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3 px-4 mb-6 mt-4">
         <StatCard label="Total Owners" value={stats.total_owners} />
         <StatCard label="With Phone" value={stats.owners_with_phone} />
         <StatCard label="Investors" value={stats.total_investors} accent />
