@@ -1,7 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import { OwnerSummary, Note, Interaction, OwnerStatus, NoteType, InteractionType, InteractionOutcome } from '@/types'
 
-export async function getOwners(opts: { search?: string; subCommunity?: string; page?: number; pageSize?: number } = {}): Promise<{ data: OwnerSummary[]; count: number }> {
+export async function getOwners(opts: {
+  search?: string; subCommunity?: string; page?: number; pageSize?: number
+} = {}): Promise<{ data: OwnerSummary[]; count: number }> {
   const { search = '', subCommunity = '', page = 1, pageSize = 50 } = opts
   const from = (page - 1) * pageSize
   let query = supabase.from('owner_summary').select('*', { count: 'exact' }).order('name', { ascending: true }).range(from, from + pageSize - 1)
@@ -31,12 +33,14 @@ export async function getOwnerInteractions(ownerId: string): Promise<Interaction
 }
 
 export async function addNote(ownerId: string, note: string, noteType: NoteType = 'general'): Promise<void> {
-  const { error } = await supabase.from('notes').insert({ owner_id: ownerId, note, note_type: noteType })
+  const { data: { user } } = await supabase.auth.getUser()
+  const { error } = await supabase.from('notes').insert({ owner_id: ownerId, note, note_type: noteType, agent_id: user?.id })
   if (error) throw error
 }
 
 export async function logInteraction(ownerId: string, interactionType: InteractionType, outcome: InteractionOutcome | null): Promise<void> {
-  const { error } = await supabase.from('interactions').insert({ owner_id: ownerId, interaction_type: interactionType, outcome })
+  const { data: { user } } = await supabase.auth.getUser()
+  const { error } = await supabase.from('interactions').insert({ owner_id: ownerId, interaction_type: interactionType, outcome, agent_id: user?.id })
   if (error) throw error
 }
 
