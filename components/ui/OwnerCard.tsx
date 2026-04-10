@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Phone } from 'lucide-react'
 import { OwnerSummary } from '@/types'
 import { StatusBadge } from './StatusBadge'
-import { initials, confidenceColor, getCallUrl } from '@/lib/utils'
+import { initials, confidenceColor, formatPhone, getCallUrl } from '@/lib/utils'
 
 export function OwnerCard({ owner, showUnits = true }: { owner: OwnerSummary; showUnits?: boolean }) {
   return (
@@ -16,7 +16,7 @@ export function OwnerCard({ owner, showUnits = true }: { owner: OwnerSummary; sh
           <StatusBadge status={owner.status} />
         </div>
         <div className="flex items-center gap-2 text-xs text-[#555D55]">
-          <span className="truncate">{owner.phone ?? 'No phone'}</span>
+          <span className="truncate">{formatPhone(owner.phone) || 'No phone'}</span>
           {showUnits && owner.unit_count > 0 && <><span>·</span><span className={owner.unit_count > 1 ? 'text-[#C9A84C] font-medium' : ''}>{owner.unit_count} unit{owner.unit_count !== 1 ? 's' : ''}</span></>}
           {owner.confidence_score != null && <><span>·</span><span className={confidenceColor(owner.confidence_score)}>{owner.confidence_score}%</span></>}
         </div>

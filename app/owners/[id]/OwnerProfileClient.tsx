@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { OwnerSummary, Note, Interaction, OwnerStatus, NoteType, InteractionOutcome } from '@/types'
 import { addNote, logInteraction, updateOwnerStatus } from '@/services/owners'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { getCallUrl, getWhatsAppUrl, initials, confidenceColor, statusLabel } from '@/lib/utils'
+import { getCallUrl, getWhatsAppUrl, formatPhone, initials, confidenceColor, statusLabel } from '@/lib/utils'
 import { Phone, MessageCircle, ArrowLeft } from 'lucide-react'
 
 const STATUSES: OwnerStatus[] = ['new', 'cold', 'warm', 'hot', 'contacted', 'not_interested', 'closed']
@@ -36,7 +36,18 @@ export function OwnerProfileClient({ owner: initialOwner, initialNotes, initialI
   const [noteType, setNoteType] = useState<NoteType>('general')
   const [outcome, setOutcome] = useState<InteractionOutcome>('answered')
   const [saving, setSaving] = useState(false)
+  const tabKey = `owner-tab-${owner.id}`
   const [tab, setTab] = useState<'notes' | 'interactions' | 'status'>('notes')
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem(tabKey)
+    if (saved === 'notes' || saved === 'interactions' || saved === 'status') setTab(saved)
+  }, [tabKey])
+
+  const handleTabChange = (t: 'notes' | 'interactions' | 'status') => {
+    setTab(t)
+    sessionStorage.setItem(tabKey, t)
+  }
 
   const handleAddNote = async () => {
     if (!noteText.trim()) return
@@ -101,7 +112,7 @@ export function OwnerProfileClient({ owner: initialOwner, initialNotes, initialI
         )}
         <div className="flex gap-2">
           <a href={getCallUrl(owner.phone)} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold ${owner.phone ? 'bg-[#C9A84C] text-[#0D0F0E]' : 'bg-[#252825] text-[#555D55] pointer-events-none'}`}>
-            <Phone size={16} />{owner.phone ?? 'No phone'}
+            <Phone size={16} />{formatPhone(owner.phone) || 'No phone'}
           </a>
           {(owner.whatsapp || owner.phone) && (
             <a href={getWhatsAppUrl(owner.whatsapp ?? owner.phone)} target="_blank" rel="noopener noreferrer"
@@ -113,7 +124,7 @@ export function OwnerProfileClient({ owner: initialOwner, initialNotes, initialI
       </div>
       <div className="flex gap-0 mx-4 mb-4 bg-[#1A1D1A] border border-[#252825] rounded-xl p-1">
         {(['notes', 'interactions', 'status'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
+          <button key={t} onClick={() => handleTabChange(t)}
             className={`flex-1 py-2 rounded-lg text-xs font-medium capitalize transition-colors ${tab === t ? 'bg-[#252825] text-[#E8ECE8]' : 'text-[#555D55]'}`}>{t}</button>
         ))}
       </div>
