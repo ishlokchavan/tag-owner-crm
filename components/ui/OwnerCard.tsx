@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import { Phone } from 'lucide-react'
 import { OwnerSummary } from '@/types'
