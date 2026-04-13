@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { BottomNav } from '@/components/layout/BottomNav'
+import { Sidebar } from '@/components/layout/Sidebar'
 
 export const metadata: Metadata = {
   title: 'TAG CRM',
@@ -36,7 +37,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="bg-[#0D0F0E] text-[#E8ECE8]">
-        <main className="min-h-screen pb-20">
+        <Sidebar />
+        <main className="min-h-screen pb-20 md:pb-0 md:ml-60">
           {children}
         </main>
         <BottomNav />

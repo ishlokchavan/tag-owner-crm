@@ -8,13 +8,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 }
 
 export async function getSubCommunityCounts(): Promise<{ name: string; count: number }[]> {
-  const { data, error } = await supabase.from('owner_summary').select('sub_communities')
+  const { data, error } = await supabase.rpc('get_sub_community_counts')
   if (error) throw error
-  const counts: Record<string, number> = {}
-  for (const row of data ?? []) {
-    for (const sc of row.sub_communities ?? []) { counts[sc] = (counts[sc] ?? 0) + 1 }
-  }
-  return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+  return (data as { name: string; count: number }[]) ?? []
 }
 
 export async function getRecentActivity(): Promise<OwnerSummary[]> {

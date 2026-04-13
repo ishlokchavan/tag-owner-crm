@@ -21,6 +21,7 @@ export function PropertiesClient({ subCommunities }: { subCommunities: string[] 
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   const fetchProps = useCallback(async (q: string, sc: string, p: number, append = false) => {
     if (p === 1) setLoading(true)
@@ -38,12 +39,30 @@ export function PropertiesClient({ subCommunities }: { subCommunities: string[] 
     debounceRef.current = setTimeout(() => { setPage(1); fetchProps(search, sub, 1, false) }, 300)
   }, [search, sub, fetchProps])
 
+  const hasMore = props.length < count
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return
+    const next = page + 1
+    setPage(next)
+    fetchProps(search, sub, next, true)
+  }, [loadingMore, hasMore, page, search, sub, fetchProps])
+
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore || loadingMore || loading) return
+    const obs = new IntersectionObserver(
+      entries => { if (entries[0].isIntersecting) loadMore() },
+      { rootMargin: '400px' }
+    )
+    obs.observe(sentinelRef.current)
+    return () => obs.disconnect()
+  }, [hasMore, loadingMore, loading, loadMore])
+
   return (
-    <div>
+    <div className="max-w-5xl mx-auto">
       <SearchBar value={search} onChange={setSearch} placeholder="Unit number…" />
       <FilterChips options={subCommunities} selected={sub} onSelect={v => { setSub(v); setPage(1) }} />
-      <div className="px-4 mb-2"><span className="text-xs text-[#555D55]">{count.toLocaleString()} units</span></div>
-      <div className="flex flex-col gap-2 px-4">
+      <div className="px-4 md:px-8 mb-2"><span className="text-xs text-[#555D55]">{count.toLocaleString()} units</span></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 px-4 md:px-8">
         {loading ? Array.from({ length: 10 }).map((_, i) => <LoadingRow key={i} />)
           : props.length === 0 ? <EmptyState />
           : props.map(p => (
@@ -82,12 +101,12 @@ export function PropertiesClient({ subCommunities }: { subCommunities: string[] 
             </div>
           ))}
       </div>
-      {!loading && props.length < count && (
-        <div className="px-4 py-4">
-          <button onClick={() => { const next = page + 1; setPage(next); fetchProps(search, sub, next, true) }}
-            disabled={loadingMore} className="w-full py-3 bg-[#1A1D1A] border border-[#252825] rounded-xl text-sm text-[#8A918A] disabled:opacity-50">
-            {loadingMore ? 'Loading…' : `Load more (${count - props.length} remaining)`}
-          </button>
+      {!loading && (
+        <div ref={sentinelRef} className="px-4 md:px-8 py-6 flex justify-center">
+          {loadingMore && <span className="text-xs text-[#555D55]">Loading more…</span>}
+          {!hasMore && props.length > 0 && (
+            <span className="text-xs text-[#555D55]">All {count.toLocaleString()} units loaded</span>
+          )}
         </div>
       )}
     </div>

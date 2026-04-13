@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { initials } from '@/lib/utils'
 import { LogOut } from 'lucide-react'
 
 interface TopBarProps {
@@ -19,11 +20,11 @@ export function TopBar({ agentName, agentRole }: TopBarProps) {
   }
 
   return (
-    <div className="flex items-center justify-between px-4 pt-12 pb-0">
+    <div className="md:hidden flex items-center justify-between px-4 pt-12 pb-0">
       <div className="flex items-center gap-2">
         <div className="w-6 h-6 rounded-full bg-[#C9A84C] flex items-center justify-center">
           <span className="text-[9px] font-bold text-[#0D0F0E]">
-            {agentName ? agentName.slice(0, 2).toUpperCase() : 'AG'}
+            {initials(agentName ?? null)}
           </span>
         </div>
         <span className="text-sm font-medium text-[#E8ECE8]">{agentName ?? 'Agent'}</span>

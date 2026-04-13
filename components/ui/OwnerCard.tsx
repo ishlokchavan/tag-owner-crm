@@ -25,9 +25,11 @@ export function OwnerCard({ owner, showUnits = true }: { owner: OwnerSummary; sh
         )}
       </div>
       {owner.phone && (
-        <a href={getCallUrl(owner.phone)} onClick={e => e.stopPropagation()} className="flex-shrink-0 w-9 h-9 bg-[#252825] rounded-xl flex items-center justify-center">
+        <button
+          onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = getCallUrl(owner.phone!) }}
+          className="flex-shrink-0 w-9 h-9 bg-[#252825] rounded-xl flex items-center justify-center">
           <Phone size={15} className="text-[#8A918A]" />
-        </a>
+        </button>
       )}
     </Link>
   )

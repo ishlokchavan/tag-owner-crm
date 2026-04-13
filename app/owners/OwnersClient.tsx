@@ -119,17 +119,17 @@ export function OwnersClient({
   }, [hasMore, loadingMore, loading, loadMore])
 
   return (
-    <div>
+    <div className="max-w-5xl mx-auto">
       <SearchBar value={search} onChange={setSearch} placeholder="Name, phone, unit number…" />
       <FilterChips options={subCommunities} selected={sub} onSelect={v => { setSub(v); setPage(1) }} />
-      <div className="px-4 mb-2">
+      <div className="px-4 md:px-8 mb-2">
         <span className="text-xs text-[#555D55]">{count.toLocaleString()} owners</span>
       </div>
-      <div className="flex flex-col gap-2 px-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 px-4 md:px-8">
         {loading
           ? Array.from({ length: 8 }).map((_, i) => <LoadingRow key={i} />)
           : owners.length === 0
-          ? <EmptyState />
+          ? <div className="col-span-2"><EmptyState /></div>
           : owners.map(o => <OwnerCard key={o.id} owner={o} />)}
       </div>
       {!loading && (

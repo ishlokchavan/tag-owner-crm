@@ -21,6 +21,7 @@ export function InvestorsClient() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   const fetchData = useCallback(async (q: string, p: number, append = false) => {
     if (p === 1) setLoading(true)
@@ -38,15 +39,33 @@ export function InvestorsClient() {
     debounceRef.current = setTimeout(() => { setPage(1); fetchData(search, 1, false) }, 300)
   }, [search, fetchData])
 
+  const hasMore = investors.length < count
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return
+    const next = page + 1
+    setPage(next)
+    fetchData(search, next, true)
+  }, [loadingMore, hasMore, page, search, fetchData])
+
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore || loadingMore || loading) return
+    const obs = new IntersectionObserver(
+      entries => { if (entries[0].isIntersecting) loadMore() },
+      { rootMargin: '400px' }
+    )
+    obs.observe(sentinelRef.current)
+    return () => obs.disconnect()
+  }, [hasMore, loadingMore, loading, loadMore])
+
   return (
-    <div>
+    <div className="max-w-5xl mx-auto">
       <SearchBar value={search} onChange={setSearch} placeholder="Name or phone…" />
-      <div className="px-4 mb-2"><span className="text-xs text-[#555D55]">{count.toLocaleString()} investors</span></div>
-      <div className="flex flex-col gap-2 px-4">
+      <div className="px-4 md:px-8 mb-2"><span className="text-xs text-[#555D55]">{count.toLocaleString()} investors</span></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 px-4 md:px-8">
         {loading ? Array.from({ length: 8 }).map((_, i) => <LoadingRow key={i} />)
           : investors.length === 0 ? <EmptyState message="No investors found" />
           : investors.map(inv => (
-            <Link key={inv.id} href={`/owners/${inv.id}`} className="bg-[#1A1D1A] border border-[#252825] rounded-2xl p-3.5 active:bg-[#252825] block">
+            <Link key={inv.id} href={`/owners/${inv.id}`} className="bg-[#1A1D1A] border border-[#252825] rounded-2xl p-3.5 active:bg-[#252825] hover:bg-[#252825] transition-colors block">
               <div className="flex items-start gap-3">
                 <div className="relative flex-shrink-0">
                   <div className="w-10 h-10 rounded-full bg-[#252825] border border-[#2E322E] flex items-center justify-center">
@@ -77,27 +96,28 @@ export function InvestorsClient() {
                 </div>
                 <div className="flex flex-col gap-1.5 flex-shrink-0">
                   {inv.phone && (
-                    <a href={getCallUrl(inv.phone)} onClick={e => e.stopPropagation()} className="w-8 h-8 bg-[#252825] rounded-xl flex items-center justify-center">
+                    <button onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = getCallUrl(inv.phone!) }}
+                      className="w-8 h-8 bg-[#252825] rounded-xl flex items-center justify-center">
                       <Phone size={13} className="text-[#8A918A]" />
-                    </a>
+                    </button>
                   )}
                   {(inv.whatsapp || inv.phone) && (
-                    <a href={getWhatsAppUrl(inv.whatsapp ?? inv.phone)} onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer"
+                    <button onClick={e => { e.preventDefault(); e.stopPropagation(); window.open(getWhatsAppUrl(inv.whatsapp ?? inv.phone), '_blank', 'noopener,noreferrer') }}
                       className="w-8 h-8 bg-[#0d2318] border border-[#1a4030] rounded-xl flex items-center justify-center">
                       <MessageCircle size={13} className="text-[#4caf7d]" />
-                    </a>
+                    </button>
                   )}
                 </div>
               </div>
             </Link>
           ))}
       </div>
-      {!loading && investors.length < count && (
-        <div className="px-4 py-4">
-          <button onClick={() => { const next = page + 1; setPage(next); fetchData(search, next, true) }}
-            disabled={loadingMore} className="w-full py-3 bg-[#1A1D1A] border border-[#252825] rounded-xl text-sm text-[#8A918A] disabled:opacity-50">
-            {loadingMore ? 'Loading…' : `Load more (${count - investors.length} remaining)`}
-          </button>
+      {!loading && (
+        <div ref={sentinelRef} className="px-4 md:px-8 py-6 flex justify-center">
+          {loadingMore && <span className="text-xs text-[#555D55]">Loading more…</span>}
+          {!hasMore && investors.length > 0 && (
+            <span className="text-xs text-[#555D55]">All {count.toLocaleString()} investors loaded</span>
+          )}
         </div>
       )}
     </div>
