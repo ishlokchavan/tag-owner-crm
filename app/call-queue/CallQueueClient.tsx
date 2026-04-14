@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { OwnerStatus, InteractionOutcome, NoteType } from '@/types'
+import type { OwnerStatus, InteractionOutcome, NoteType } from '@/types'
 import { ProspectRow, loadDailyQueue, completeProspect, updateProspectOwnerStatus } from '@/services/prospecting'
 import { getCallUrl, getWhatsAppUrl, initials, confidenceColor, statusLabel } from '@/lib/utils'
 import { StatusBadge } from '@/components/ui/StatusBadge'

@@ -1,4 +1,4 @@
-import { OwnerStatus } from '@/types'
+import type { OwnerStatus } from '@/types'
 
 /**
  * Normalizes a phone number to E.164 format (+XXXXXXXXXXX).

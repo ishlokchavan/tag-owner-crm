@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { OwnerSummary } from '@/types'
+import type { OwnerSummary } from '@/types'
 import { getInvestors } from '@/services/investors'
 import { SearchBar } from '@/components/ui/SearchBar'
 import { LoadingRow } from '@/components/ui/LoadingSpinner'

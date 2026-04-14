@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { OwnerSummary } from '@/types'
+import type { OwnerSummary } from '@/types'
 import { getOwners } from '@/services/owners'
 import { SearchBar } from '@/components/ui/SearchBar'
 import { FilterChips } from '@/components/ui/FilterChips'

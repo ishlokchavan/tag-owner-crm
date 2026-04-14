@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import { BottomNav } from '@/components/layout/BottomNav'
-import { Sidebar } from '@/components/layout/Sidebar'
+import { AppChrome } from '@/components/layout/AppChrome'
 
 export const metadata: Metadata = {
   title: 'TAG CRM',
@@ -28,6 +27,29 @@ export const viewport: Viewport = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const serviceWorkerScript =
+    process.env.NODE_ENV === 'production'
+      ? `
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+              navigator.serviceWorker.register('/sw.js');
+            });
+          }
+        `
+      : `
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+              registrations.forEach(registration => registration.unregister());
+            });
+          }
+
+          if ('caches' in window) {
+            caches.keys().then(keys => {
+              keys.forEach(key => caches.delete(key));
+            });
+          }
+        `
+
   return (
     <html lang="en">
       <head>
@@ -37,18 +59,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="bg-[#0D0F0E] text-[#E8ECE8]">
-        <Sidebar />
-        <main className="min-h-screen pb-20 md:pb-0 md:ml-60">
+        <AppChrome>
           {children}
-        </main>
-        <BottomNav />
-        <script dangerouslySetInnerHTML={{ __html: `
-          if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-              navigator.serviceWorker.register('/sw.js');
-            });
-          }
-        `}} />
+        </AppChrome>
+        <script dangerouslySetInnerHTML={{ __html: serviceWorkerScript }} />
       </body>
     </html>
   )

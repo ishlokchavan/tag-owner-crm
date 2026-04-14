@@ -22,14 +22,45 @@ export function Sidebar() {
   const [role, setRole] = useState<string | null>(null)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      supabase.from('agent_profiles').select('name, role').eq('id', user.id).single()
-        .then(({ data }) => {
-          setName(data?.name || user.email?.split('@')[0] || 'Agent')
-          setRole(data?.role ?? null)
-        })
+    let active = true
+
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user || !active) return
+
+      const fallbackName =
+        (user.user_metadata?.display_name as string | undefined) ||
+        (user.email ? user.email.split('@')[0] : 'Agent')
+      const fallbackRole =
+        typeof user.app_metadata?.role === 'string'
+          ? user.app_metadata.role
+          : typeof user.user_metadata?.role === 'string'
+            ? user.user_metadata.role
+            : null
+
+      setName(fallbackName)
+      setRole(fallbackRole ? fallbackRole.trim().toLowerCase() : null)
+
+      const { data } = await supabase
+        .from('agent_profiles')
+        .select('name, role')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!active) return
+
+      setName(data?.name || fallbackName)
+      setRole(
+        typeof data?.role === 'string'
+          ? data.role.trim().toLowerCase()
+          : fallbackRole
+            ? fallbackRole.trim().toLowerCase()
+            : null
+      )
     })
+
+    return () => {
+      active = false
+    }
   }, [])
 
   const handleLogout = async () => {

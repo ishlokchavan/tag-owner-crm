@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { PropertyDetail } from '@/types'
+import type { PropertyDetail } from '@/types'
 import { getProperties } from '@/services/properties'
 import { SearchBar } from '@/components/ui/SearchBar'
 import { FilterChips } from '@/components/ui/FilterChips'

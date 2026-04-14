@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Phone } from 'lucide-react'
-import { OwnerSummary } from '@/types'
+import type { OwnerSummary } from '@/types'
 import { StatusBadge } from './StatusBadge'
 import { initials, confidenceColor, formatPhone, getCallUrl } from '@/lib/utils'
 

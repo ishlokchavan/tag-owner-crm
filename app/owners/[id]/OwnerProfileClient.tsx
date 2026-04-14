@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { OwnerSummary, Note, Interaction, OwnerStatus, NoteType, InteractionOutcome } from '@/types'
+import type { OwnerSummary, Note, Interaction, OwnerStatus, NoteType, InteractionOutcome } from '@/types'
 import { addNote, logInteraction, updateOwnerStatus } from '@/services/owners'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { getCallUrl, getWhatsAppUrl, formatPhone, initials, confidenceColor, statusLabel } from '@/lib/utils'
