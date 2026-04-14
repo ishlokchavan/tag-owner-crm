@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { OwnerSummary, Note, Interaction, OwnerStatus, NoteType, InteractionType, InteractionOutcome } from '@/types'
+import type { OwnerSummary, Note, Interaction, OwnerStatus, NoteType, InteractionType, InteractionOutcome } from '@/types'
 
 export async function getOwners(opts: {
   search?: string; subCommunity?: string; page?: number; pageSize?: number
@@ -21,15 +21,45 @@ export async function getOwnerById(id: string): Promise<OwnerSummary | null> {
 }
 
 export async function getOwnerNotes(ownerId: string): Promise<Note[]> {
-  const { data, error } = await supabase.from('notes').select('*').eq('owner_id', ownerId).eq('is_deleted', false).order('created_at', { ascending: false })
+  const { data, error } = await supabase.from('notes').select('id, owner_id, note, note_type, created_at, agent_id').eq('owner_id', ownerId).eq('is_deleted', false).order('created_at', { ascending: false })
   if (error) throw error
   return (data as Note[]) ?? []
 }
 
 export async function getOwnerInteractions(ownerId: string): Promise<Interaction[]> {
-  const { data, error } = await supabase.from('interactions').select('*').eq('owner_id', ownerId).eq('is_deleted', false).order('created_at', { ascending: false })
+  const { data, error } = await supabase.from('interactions').select('id, owner_id, interaction_type, outcome, created_at, agent_id').eq('owner_id', ownerId).eq('is_deleted', false).order('created_at', { ascending: false })
   if (error) throw error
   return (data as Interaction[]) ?? []
+}
+
+export interface AgentLookup {
+  id: string
+  name: string | null
+  role: 'agent' | 'admin' | string | null
+  is_active: boolean | null
+}
+
+export async function getAgentProfilesByIds(agentIds: string[]): Promise<AgentLookup[]> {
+  if (agentIds.length === 0) return []
+
+  const { data, error } = await supabase
+    .from('agent_profiles')
+    .select('id, name, role, is_active')
+    .in('id', agentIds)
+
+  if (error) throw error
+  return (data as AgentLookup[]) ?? []
+}
+
+export async function getActiveAgents(): Promise<AgentLookup[]> {
+  const { data, error } = await supabase
+    .from('agent_profiles')
+    .select('id, name, role, is_active')
+    .eq('is_active', true)
+    .order('name', { ascending: true })
+
+  if (error) throw error
+  return (data as AgentLookup[]) ?? []
 }
 
 export async function addNote(ownerId: string, note: string, noteType: NoteType = 'general'): Promise<void> {
@@ -45,8 +75,35 @@ export async function logInteraction(ownerId: string, interactionType: Interacti
 }
 
 export async function updateOwnerStatus(ownerId: string, status: OwnerStatus): Promise<void> {
-  const { error } = await supabase.from('owners').update({ status, updated_at: new Date().toISOString() }).eq('id', ownerId)
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data: currentOwner, error: currentOwnerError } = await supabase
+    .from('owners')
+    .select('status')
+    .eq('id', ownerId)
+    .single()
+
+  if (currentOwnerError) throw currentOwnerError
+
+  const previousStatus = currentOwner?.status as OwnerStatus | undefined
+  const now = new Date().toISOString()
+
+  const { error } = await supabase
+    .from('owners')
+    .update({ status, updated_at: now })
+    .eq('id', ownerId)
+
   if (error) throw error
+
+  if (previousStatus && previousStatus !== status) {
+    const { error: noteError } = await supabase.from('notes').insert({
+      owner_id: ownerId,
+      note: `Status changed from ${previousStatus} to ${status}`,
+      note_type: 'general',
+      agent_id: user?.id,
+    })
+    if (noteError) throw noteError
+  }
 }
 
 export async function getCallQueue(page = 1, pageSize = 50): Promise<{ data: OwnerSummary[]; count: number }> {
